@@ -9,7 +9,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "test:env": "pnpm build && node scripts/run-test-env.mjs",
+    "test:env:smoke": "pnpm build && node scripts/run-test-env.mjs --scenario testing/scenarios/smoke.json"
   },
   "devDependencies": {
     "turbo": "^2.3.0",
