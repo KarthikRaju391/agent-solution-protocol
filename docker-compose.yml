@@ -1,0 +1,14 @@
+services:
+  db:
+    image: ankane/pgvector:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: asp_user
+      POSTGRES_PASSWORD: asp_password
+      POSTGRES_DB: asp_registry
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
