@@ -67,3 +67,51 @@
 2.  [ ] Add PostgreSQL + pgvector persistence
 3.  [ ] Add authentication/rate limiting to server
 4.  [ ] Create agent integration example (MCP or similar)
+### Thursday, February 5, 2026
+
+#### 8. Strategic Direction Expansion
+*   **Decision:** Expanded the project vision beyond PoC into an actionable roadmap for product, platform, and ecosystem growth.
+*   **Updates Added to README:**
+    *   Near-term: private team registries, confidence scoring, context fingerprints, agent UX integrations.
+    *   Medium-term: reputation graph, composable fixes, regression alerts, policy-aware sanitization.
+    *   Long-term: federated registries, cryptographic provenance, benchmark datasets, incentive mechanisms.
+*   **Rationale:** Clarifies execution paths so contributors can align implementation priorities with the broader mission.
+
+#### 9. Next Practical Steps
+1.  Add pgvector-backed persistence + semantic retrieval.
+2.  Introduce packet scoring metadata in protocol schemas and API responses.
+3.  Add private-registry and policy controls for enterprise adoption.
+4.  Prototype MCP-style agent integration for end-to-end packet lifecycle.
+### Thursday, February 5, 2026 (MVP Validation Follow-up)
+
+#### 10. MVP Validation Confirmed
+*   **Decision:** Treated MVP validation as a first-class deliverable before roadmap expansion.
+*   **Verification Run:**
+    *   `pnpm test` (all workspace tests passing)
+    *   `pnpm build` (all packages build)
+    *   `pnpm typecheck` (strict TS checks passing)
+*   **Outcome:** Pre-expansion MVP baseline is now explicitly validated and documented.
+
+#### 11. Sanitizer Compatibility Fix + Guidance
+*   **Issue:** CLI sanitizer was not redacting in tests because grammar loading assumed an incorrect WASM resolution path/API shape.
+*   **Fix:** Updated `apps/cli/src/sanitizer.ts` to:
+    *   Resolve parser init compatibly across `web-tree-sitter` export shapes.
+    *   Resolve grammar WASM files via `require.resolve(...)` package paths instead of fragile relative paths.
+*   **Result:** CLI sanitizer tests now pass consistently in the workspace test run.
+*   **Guidance Added:** README now includes concrete sanitization hardening recommendations (policy profiles, structured secret detectors, path-based masking, human review gate).
+
+### Thursday, February 5, 2026 (Scenario Test Environment)
+
+#### 12. End-to-End Scenario Test Harness Added
+*   **Decision:** Added a repeatable local scenario runner so contributors can validate new ideas without manually orchestrating server + CLI + API calls.
+*   **Implementation:**
+    *   Added `scripts/run-test-env.mjs` to:
+        *   Start local registry server on configurable port.
+        *   Run sanitizer test cases via CLI against sample code.
+        *   Submit packet payloads to `/packets`.
+        *   Validate `/search` returns expected minimum results.
+    *   Added `testing/scenarios/smoke.json` as the baseline scenario template.
+    *   Added root scripts:
+        *   `pnpm test:env`
+        *   `pnpm test:env:smoke`
+*   **Outcome:** Project now has a complete, extensible test environment for quickly validating new scenarios end-to-end.

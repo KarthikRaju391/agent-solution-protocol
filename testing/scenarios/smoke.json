@@ -1,0 +1,51 @@
+{
+  "name": "ASP local smoke scenario",
+  "description": "Validates sanitizer behavior plus packet submit/search flow against a local server.",
+  "sanitizeCases": [
+    {
+      "name": "TypeScript API key redaction",
+      "lang": "typescript",
+      "code": "const apiKey = \"sk-1234567890abcdef12345678\";\nconst safe = \"hello\";\n",
+      "expectRedacted": true,
+      "mustNotContain": ["sk-1234567890abcdef12345678"],
+      "mustContain": ["<REDACTED>"]
+    },
+    {
+      "name": "Python secret redaction",
+      "lang": "python",
+      "code": "secret_token = \"prod-secret-token-abcdefghijklmn\"\nprint(\"ok\")\n",
+      "expectRedacted": true,
+      "mustNotContain": ["prod-secret-token-abcdefghijklmn"],
+      "mustContain": ["<REDACTED>"]
+    }
+  ],
+  "packets": [
+    {
+      "symptom": {
+        "description": "TypeError when calling undefined function",
+        "errorMessage": "TypeError: undefined is not a function",
+        "tags": ["typescript", "runtime-error"]
+      },
+      "context": {
+        "language": "TypeScript",
+        "languageVersion": "5.3",
+        "framework": "Node.js",
+        "runtime": "Node.js 20"
+      },
+      "fix": {
+        "diff": "--- a/src/example.ts\n+++ b/src/example.ts\n@@ -1,3 +1,3 @@\n-const result = someFunction();\n+const result = someFunction?.() ?? defaultValue;",
+        "files": ["src/example.ts"],
+        "explanation": "Added optional chaining and nullish coalescing to handle undefined"
+      },
+      "verification": {
+        "type": "command",
+        "command": "pnpm test",
+        "passed": true
+      }
+    }
+  ],
+  "search": {
+    "query": "TypeError",
+    "minCount": 1
+  }
+}

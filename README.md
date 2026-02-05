@@ -42,5 +42,67 @@ Future agents will consult this registry before or during debugging:
 *   **Protocol vs. Platform:** We are defining the *Protocol* (how agents talk), which can feed into multiple Platforms (Centralized DB, Federated, etc.).
 
 ## 7. Current Status
-*   **Phase:** Ideation & Architecture.
-*   **Next Steps:** Define Tech Stack and Proof of Concept (PoC).
+*   **Phase:** MVP foundation implemented and testable (protocol schema, CLI flow, and API endpoints).
+*   **Validation:** `pnpm test`, `pnpm build`, and `pnpm typecheck` all pass in the monorepo.
+*   **Immediate Next Steps:** Add persistence (PostgreSQL + pgvector), scoring metadata, and policy-aware sanitization controls.
+
+### MVP Smoke Test
+1. Start the API: `pnpm --filter @asp/server dev`
+2. Confirm CLI wiring: `pnpm --filter @asp/cli start version`
+3. Create an example packet: `pnpm --filter @asp/cli start create -o packet.json`
+4. Submit packet: `pnpm --filter @asp/cli start submit packet.json`
+5. Search packet: `pnpm --filter @asp/cli start search "TypeError"`
+
+### Complete Test Environment (Scenario Runner)
+Use the built-in scenario runner to spin up the server, execute sanitizer checks, submit packets, and verify search behavior in one command.
+
+```bash
+pnpm test:env:smoke
+```
+
+You can create additional scenario files in `testing/scenarios/*.json` and run them with:
+
+```bash
+pnpm test:env -- --scenario testing/scenarios/<your-scenario>.json --port 3200
+```
+
+Optional flags:
+* `--registry <url>` to target a running registry instead of local default.
+* `--keep-server` to leave the spawned server running after scenario completion.
+
+### Sanitization Notes (Current + Recommendations)
+*   **Current behavior:** AST-based redaction for TypeScript/JavaScript/Python that masks likely secret assignments and long key-like literals.
+*   **Recommended hardening:**
+    1. Add deny/allow policy profiles per org (what to always redact vs preserve).
+    2. Add entropy + structured-secret detectors (JWT, AWS keys, GitHub tokens, private keys, connection strings).
+    3. Add path-based masking (`.env`, config, CI files) before AST pass.
+    4. Add a mandatory human review diff before publish (already in proposed workflow).
+
+## 8. Where ASP Can Go Next
+
+ASP can evolve from a "shared bug-fix format" into a full trust and coordination layer for software agents.
+
+### Near-Term Product Extensions
+*   **Private Team Registry:** Let teams run a private ASP registry to retain organization-specific fixes, then optionally upstream sanitized packets to a public network.
+*   **Confidence Scoring:** Rank packets by verification strength (test quality, reproducibility, number of successful reuses).
+*   **Context Fingerprints:** Build deterministic hashes for stack trace + dependency graph + runtime metadata to improve matching quality.
+*   **Agent UX Integrations:** Add extensions for popular agent environments (CLI wrappers, MCP tools, IDE plugins) so packet creation/submission is one command.
+
+### Medium-Term Platform Features
+*   **Reputation Graph:** Weight packets by contributor trust, verified reruns, and domain expertise.
+*   **Composable Fixes:** Allow packets to reference dependencies on other packets (e.g., "apply packet B before packet A").
+*   **Regression Alerts:** Notify maintainers when a packet's verification starts failing against new versions.
+*   **Policy-Aware Sanitization:** Add configurable enterprise policies (PII classes, legal boundaries, data residency).
+
+### Long-Term Ecosystem Opportunities
+*   **Federated Registry Network:** Multiple registries that can share signatures and packet metadata without full code disclosure.
+*   **Protocol-Level Provenance:** Cryptographic signing + tamper-evident history for packet origin and edits.
+*   **Benchmark Dataset for Agents:** Use high-quality solved packets as eval data for debugging-capable model benchmarks.
+*   **Bug Bounty-Style Incentives:** Reward contributors for high-value packets that repeatedly resolve production incidents.
+
+### Suggested Next Milestones
+1.  Ship PostgreSQL + pgvector persistence with semantic retrieval.
+2.  Add packet scoring metadata (`confidence`, `reusedCount`, `verifiedAt`).
+3.  Build a private-registry mode with org-level auth and policy controls.
+4.  Publish a minimal MCP integration that can: detect fix → draft packet → run sanitizer → request user approval.
+5.  Define protocol version negotiation for future backward compatibility.
