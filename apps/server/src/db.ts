@@ -4,23 +4,24 @@ const DEFAULT_DATABASE_URL = 'postgres://asp_user:asp_password@localhost:5432/as
 
 let sql: postgres.Sql | null = null;
 
+function createConnection(connectionString: string): postgres.Sql {
+  const isRemote = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
+  return postgres(connectionString, {
+    max: 10,
+    idle_timeout: 20,
+    connect_timeout: 10,
+    ssl: isRemote ? 'require' : false,
+  });
+}
+
 export function getConnection(): postgres.Sql {
   if (!sql) {
-    const connectionString = process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
-    const isRemote = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
-    sql = postgres(connectionString, {
-      max: 10,
-      idle_timeout: 20,
-      connect_timeout: 10,
-      ssl: isRemote ? 'require' : false,
-    });
+    sql = createConnection(process.env.DATABASE_URL || DEFAULT_DATABASE_URL);
   }
   return sql;
 }
 
-export async function initDatabase(): Promise<void> {
-  const db = getConnection();
-
+async function setupSchema(db: postgres.Sql): Promise<void> {
   await db`SET client_min_messages TO WARNING`;
   await db`CREATE EXTENSION IF NOT EXISTS "vector"`;
   await db`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
@@ -69,6 +70,38 @@ export async function initDatabase(): Promise<void> {
   await db`
     CREATE INDEX IF NOT EXISTS idx_packets_symptom_tags ON packets USING GIN (symptom_tags)
   `;
+}
+
+export async function initDatabase(): Promise<void> {
+  const primaryUrl = process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
+  const fallbackUrl = process.env.FALLBACK_DATABASE_URL;
+
+  // Try primary database
+  try {
+    sql = createConnection(primaryUrl);
+    await setupSchema(sql);
+    return;
+  } catch (err) {
+    console.warn('Primary database unavailable:', (err as Error).message);
+    await sql?.end().catch(() => {});
+    sql = null;
+  }
+
+  // Try fallback database (e.g. Neon) if configured
+  if (fallbackUrl) {
+    try {
+      sql = createConnection(fallbackUrl);
+      await setupSchema(sql);
+      console.log('Using fallback database');
+      return;
+    } catch (err) {
+      console.warn('Fallback database unavailable:', (err as Error).message);
+      await sql?.end().catch(() => {});
+      sql = null;
+    }
+  }
+
+  throw new Error('All database connections failed');
 }
 
 export async function closeDatabase(): Promise<void> {
