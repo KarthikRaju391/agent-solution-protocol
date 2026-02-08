@@ -13,7 +13,8 @@
   "dependencies": {
     "@asp/protocol": "workspace:*",
     "@hono/node-server": "^1.13.0",
-    "hono": "^4.6.0"
+    "hono": "^4.6.0",
+    "postgres": "^3.4.8"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

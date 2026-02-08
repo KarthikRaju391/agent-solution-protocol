@@ -100,6 +100,26 @@
 *   **Result:** CLI sanitizer tests now pass consistently in the workspace test run.
 *   **Guidance Added:** README now includes concrete sanitization hardening recommendations (policy profiles, structured secret detectors, path-based masking, human review gate).
 
+### Saturday, February 8, 2026
+
+#### 13. PostgreSQL + pgvector Integration
+*   **Implementation:** Added persistent storage layer replacing the in-memory array.
+*   **New Files:**
+    *   `apps/server/src/db.ts` — Connection management, schema initialization (creates `packets` table with pgvector `embedding` column for future semantic search).
+    *   `apps/server/src/store.ts` — `PacketStore` interface with two implementations: `PostgresPacketStore` (production) and `InMemoryPacketStore` (tests/fallback).
+    *   `apps/server/src/app.ts` — Extracted Hono app creation from server startup for testability.
+*   **Database Schema:** Flat table mapping all SolvedPacket fields to columns, with GIN index on `symptom_tags` and B-tree index on `created_at`. Includes `vector(384)` column for future embeddings.
+*   **Graceful Fallback:** Server attempts PostgreSQL connection on startup; if unavailable, falls back to in-memory store with a warning.
+*   **Dependency:** Added `postgres` (postgres.js) — lightweight ESM-native driver.
+*   **Tests:** Expanded from 2 placeholder tests to 18 real API tests using `createApp()` + `InMemoryPacketStore`.
+*   **Docker:** Existing `docker-compose.yml` with `ankane/pgvector` image is now wired and usable.
+
+#### 14. Next Steps
+1.  [ ] Add vector embeddings for semantic search (fastembed-js or OpenAI)
+2.  [ ] Add authentication/rate limiting to server
+3.  [ ] Deploy (Fly.io / Railway / Docker)
+4.  [ ] Create agent integration example (MCP tool)
+
 ### Thursday, February 5, 2026 (Scenario Test Environment)
 
 #### 12. End-to-End Scenario Test Harness Added
