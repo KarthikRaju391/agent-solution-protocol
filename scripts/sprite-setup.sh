@@ -37,21 +37,33 @@ apt-get install -y -qq git curl build-essential ca-certificates gnupg
 # --- 2. PostgreSQL + pgvector ---
 echo "[2/7] Installing PostgreSQL..."
 
-# Add PostgreSQL APT repo for latest version
-if [ ! -f /etc/apt/sources.list.d/pgdg.list ]; then
-  # Get distro codename from /etc/os-release (works without lsb_release)
-  CODENAME=$(. /etc/os-release && echo "${VERSION_CODENAME:-${UBUNTU_CODENAME:-bookworm}}")
-  curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
-  echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-  apt-get update -qq
+# Clean up any broken apt repo from previous runs
+rm -f /etc/apt/sources.list.d/pgdg.list /usr/share/keyrings/postgresql-keyring.gpg
+
+# Install from system packages (avoids PGDG repo/codename issues)
+apt-get update -qq
+apt-get install -y -qq postgresql postgresql-common
+
+# Detect installed PostgreSQL version
+PG_VERSION=$(pg_lsclusters -h 2>/dev/null | awk '{print $1}' | head -1)
+if [ -z "$PG_VERSION" ]; then
+  echo "       ERROR: PostgreSQL installation failed" >&2
+  exit 1
 fi
 
-apt-get install -y -qq postgresql-16 postgresql-16-pgvector
+# Install pgvector for the detected version
+apt-get install -y -qq "postgresql-${PG_VERSION}-pgvector" 2>/dev/null || {
+  echo "       pgvector package not available, building from source..."
+  apt-get install -y -qq "postgresql-server-dev-${PG_VERSION}"
+  git clone --branch v0.8.0 --depth 1 https://github.com/pgvector/pgvector.git /tmp/pgvector
+  make -C /tmp/pgvector && make -C /tmp/pgvector install
+  rm -rf /tmp/pgvector
+}
 
 # Start PostgreSQL
-pg_ctlcluster 16 main start 2>/dev/null || true
+pg_ctlcluster "$PG_VERSION" main start 2>/dev/null || true
 
-echo "       PostgreSQL 16 + pgvector installed"
+echo "       PostgreSQL ${PG_VERSION} + pgvector installed"
 
 # --- 3. Create database ---
 echo "[3/7] Setting up database..."
