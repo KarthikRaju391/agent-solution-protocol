@@ -39,8 +39,10 @@ echo "[2/7] Installing PostgreSQL..."
 
 # Add PostgreSQL APT repo for latest version
 if [ ! -f /etc/apt/sources.list.d/pgdg.list ]; then
+  # Get distro codename from /etc/os-release (works without lsb_release)
+  CODENAME=$(. /etc/os-release && echo "${VERSION_CODENAME:-${UBUNTU_CODENAME:-bookworm}}")
   curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
-  echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+  echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
   apt-get update -qq
 fi
 
