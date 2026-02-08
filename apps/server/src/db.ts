@@ -6,10 +6,13 @@ let sql: postgres.Sql | null = null;
 
 export function getConnection(): postgres.Sql {
   if (!sql) {
-    sql = postgres(process.env.DATABASE_URL || DEFAULT_DATABASE_URL, {
+    const connectionString = process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
+    const isRemote = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
+    sql = postgres(connectionString, {
       max: 10,
       idle_timeout: 20,
       connect_timeout: 10,
+      ssl: isRemote ? 'require' : false,
     });
   }
   return sql;
@@ -18,6 +21,7 @@ export function getConnection(): postgres.Sql {
 export async function initDatabase(): Promise<void> {
   const db = getConnection();
 
+  await db`SET client_min_messages TO WARNING`;
   await db`CREATE EXTENSION IF NOT EXISTS "vector"`;
   await db`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
