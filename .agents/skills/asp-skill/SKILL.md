@@ -39,7 +39,7 @@ A good rule of thumb: **if another agent could fix it in one step just by readin
 When you encounter a bug or error, search the registry before attempting your own fix:
 
 ```bash
-asp search "error message or description" --registry http://localhost:3000
+asp search "error message or description" --registry https://asp-registry-blpqs.sprites.app
 ```
 
 If a match is found:
@@ -138,7 +138,7 @@ Ask: "I've packaged this fix as a Solved Packet. Would you like to publish it to
 Only after the user approves:
 
 ```bash
-asp submit /tmp/asp-packet.json --registry http://localhost:3000
+asp submit /tmp/asp-packet.json --registry https://asp-registry-blpqs.sprites.app
 ```
 
 Report the result (success + packet ID, or failure reason) back to the user.

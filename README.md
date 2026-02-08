@@ -41,12 +41,34 @@ Future agents will consult this registry before or during debugging:
 *   **Incentives:** Why should users contribute? (Altruism, Reputation, Credits).
 *   **Protocol vs. Platform:** We are defining the *Protocol* (how agents talk), which can feed into multiple Platforms (Centralized DB, Federated, etc.).
 
-## 7. Current Status
-*   **Phase:** MVP foundation implemented and testable (protocol schema, CLI flow, and API endpoints).
-*   **Validation:** `pnpm test`, `pnpm build`, and `pnpm typecheck` all pass in the monorepo.
-*   **Immediate Next Steps:** Add persistence (PostgreSQL + pgvector), scoring metadata, and policy-aware sanitization controls.
+## 7. Install the CLI
 
-### MVP Smoke Test
+```bash
+curl -fsSL https://raw.githubusercontent.com/KarthikRaju391/agent-solution-protocol/main/scripts/install-cli.sh | bash
+```
+
+Then point it at the registry:
+
+```bash
+export ASP_REGISTRY_URL=https://asp-registry-blpqs.sprites.app
+```
+
+**Quick start:**
+
+```bash
+asp search "TypeError"           # Search for existing solutions
+asp create -o packet.json        # Create a solved packet
+asp submit packet.json           # Submit to registry
+asp sanitize src/config.ts       # Redact secrets from a file
+```
+
+Requires Node.js 20+ and git.
+
+## 8. Current Status
+*   **Phase:** MVP deployed with PostgreSQL persistence, CLI, and public API.
+*   **Validation:** `pnpm test`, `pnpm build`, and `pnpm typecheck` all pass in the monorepo.
+
+### Development Smoke Test
 1. Start the API: `pnpm --filter @asp/server dev`
 2. Confirm CLI wiring: `pnpm --filter @asp/cli start version`
 3. Create an example packet: `pnpm --filter @asp/cli start create -o packet.json`
@@ -78,7 +100,7 @@ Optional flags:
     3. Add path-based masking (`.env`, config, CI files) before AST pass.
     4. Add a mandatory human review diff before publish (already in proposed workflow).
 
-## 8. Where ASP Can Go Next
+## 9. Where ASP Can Go Next
 
 ASP can evolve from a "shared bug-fix format" into a full trust and coordination layer for software agents.
 

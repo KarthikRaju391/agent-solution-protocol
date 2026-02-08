@@ -6,6 +6,8 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 
+const DEFAULT_REGISTRY = process.env.ASP_REGISTRY_URL || 'https://asp-registry-blpqs.sprites.app';
+
 const program = new Command();
 
 program
@@ -208,14 +210,14 @@ program
 program
   .command('submit <file>')
   .description('Submit a solved packet to the registry')
-  .option('-r, --registry <url>', 'Registry URL', 'http://localhost:3000')
+  .option('-r, --registry <url>', 'Registry URL', DEFAULT_REGISTRY)
   .action(async (file, options) => {
     const fs = await import('fs/promises');
-    
+
     try {
       const content = await fs.readFile(file, 'utf-8');
       const packet = JSON.parse(content);
-      
+
       const response = await fetch(`${options.registry}/packets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -237,7 +239,7 @@ program
 program
   .command('search <query>')
   .description('Search the registry for solutions')
-  .option('-r, --registry <url>', 'Registry URL', 'http://localhost:3000')
+  .option('-r, --registry <url>', 'Registry URL', DEFAULT_REGISTRY)
   .action(async (query, options) => {
     try {
       const response = await fetch(`${options.registry}/search`, {
